@@ -2,6 +2,7 @@ package dev.codebrunch.productservice.models;
 
 import java.util.Date;
 
+//Base model
 public abstract class BaseModel {
     private Long id;
     private Date createdAt;
