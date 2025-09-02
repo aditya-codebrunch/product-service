@@ -2,7 +2,7 @@ package dev.codebrunch.productservice.models;
 
 import java.util.Date;
 
-//Base model - this is an abstract class
+//Base model - this is an abstract class for inheritance
 public abstract class BaseModel {
     private Long id;
     private Date createdAt;
