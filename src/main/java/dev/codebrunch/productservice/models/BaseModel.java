@@ -1,9 +1,14 @@
 package dev.codebrunch.productservice.models;
 
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+
 import java.util.Date;
 
-
+@MappedSuperclass
 public abstract class BaseModel {
+
+    @Id
     private Long id;
     private Date createdAt;
     private Date lastModifiedAt;

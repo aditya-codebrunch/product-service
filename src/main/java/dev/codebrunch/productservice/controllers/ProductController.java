@@ -5,6 +5,7 @@ import dev.codebrunch.productservice.dtos.ProductNotFoundExceptionDto;
 import dev.codebrunch.productservice.exceptions.ProductNotFoundException;
 import dev.codebrunch.productservice.models.Product;
 import dev.codebrunch.productservice.services.ProductService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,7 +36,7 @@ public class ProductController {
 
     private ProductService productService;
 
-    public ProductController(ProductService productService) {
+    public ProductController(@Qualifier("fakeStoreProductService") ProductService productService) {
         this.productService = productService;
     }
 
@@ -50,7 +51,9 @@ public class ProductController {
 
     @GetMapping("/")
     public List<Product> getAllProducts(){
-        return new ArrayList<>();
+
+        List<Product> products = this.productService.getAllProducts();
+        return products;
     }
 
     @PostMapping("/")
