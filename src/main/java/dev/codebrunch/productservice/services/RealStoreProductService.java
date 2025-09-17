@@ -1,41 +1,110 @@
 package dev.codebrunch.productservice.services;
 
+import dev.codebrunch.productservice.exceptions.CategoryNotFoundException;
+import dev.codebrunch.productservice.exceptions.ProductNotFoundException;
+import dev.codebrunch.productservice.models.Category;
+import dev.codebrunch.productservice.repositories.CategoryRepository;
+import dev.codebrunch.productservice.repositories.ProductRepository;
 import dev.codebrunch.productservice.models.Product;
-import org.springframework.context.annotation.Primary;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 
-@Service("realProductService")
+import java.util.List;
+import java.util.Optional;
+
+@Service("realStoreProductService")
 public class RealStoreProductService implements ProductService {
 
+    private ProductRepository productRepository;
+    private CategoryRepository categoryRepository;
+
+    public RealStoreProductService(ProductRepository productRepository, CategoryRepository categoryRepository) {
+        this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
+    }
+
     @Override
-    public Product getSingleProduct(Long productId) {
-        return null;
+    public Product getSingleProduct(Long productId) throws ProductNotFoundException {
+//        Optional<Product> optionalProduct = productRepository.findById(productId);
+//
+//        if (optionalProduct.isEmpty()) {
+//            throw new ProductNotFoundException("Product with id " + productId + " doesn't exist.");
+//        }
+//
+//        return optionalProduct.get();
+
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId, "Product with id " + productId + " doesn't exist."));
     }
 
     @Override
     public List<Product> getAllProducts() {
-        return List.of();
+        return productRepository.findAll();
+    }
+
+    /*
+
+    {
+        "title" : "Apple airtag",
+        "description" : "useless item",
+        "price" : "2000.0",
+        "category" : {
+                        "title" : "tracking device"
+                     }
+    }
+
+     */
+    @Override
+    public Product createProduct(Product product) throws CategoryNotFoundException {
+        Category category = product.getCategory();
+
+        if (category == null) {
+            throw new CategoryNotFoundException("Product can't be created without category, Please try again with category.");
+        }
+
+        //Find the category with the title
+        Optional<Category> optionalCategory = categoryRepository.findByTitle(category.getTitle());
+
+        if (optionalCategory.isEmpty()) {
+            //There's no category in the DB with the given title.
+            //Create a category object and save it in the DB.
+            category = categoryRepository.save(category);
+        } else {
+            category = optionalCategory.get();
+        }
+        product.setCategory(category);
+
+        return productRepository.save(product);
     }
 
     @Override
-    public Product createProduct(Product product) {
-        return null;
+    public void deleteProduct(Long productId) {
+        productRepository.deleteById(productId);
     }
 
     @Override
-    public boolean deleteProduct(Long productId) {
-        return false;
-    }
+    public Page<Product> getProductsByTitle(String title, int pageNumber, int pageSize) {
+//        Sort sort = Sort
+//                .by(Sort.Direction.ASC, "price")
+//                .by(Sort.Direction.DESC, "title");
 
-    @Override
-    public Product updateProduct(Long productId, Product product) {
-        return null;
-    }
+//        Sort sort = null;
+//        if (sortInput.equals("ASC")) {
+//            sort = Sort.by(Sort.Direction.ASC, "price");
+//        } else {
+//            sort = Sort.by(Sort.Direction.DESC, "price");
+//        }
+//
+//        sort.by(......)
 
-    @Override
-    public Product partialUpdateProduct(Long productId, Product product) {
-        return null;
+        return productRepository.findByTitleContainsIgnoreCase(
+                title,
+                PageRequest.of(pageNumber,
+                        pageSize,
+                        Sort.by(Sort.Direction.ASC, "price").by(Sort.Direction.ASC, "title"))
+        );
     }
 }

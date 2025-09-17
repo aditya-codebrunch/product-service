@@ -1,24 +1,22 @@
 package dev.codebrunch.productservice.services;
 
+import dev.codebrunch.productservice.exceptions.CategoryNotFoundException;
+import dev.codebrunch.productservice.exceptions.ProductNotFoundException;
 import dev.codebrunch.productservice.models.Product;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public interface ProductService {
 
-    Product getSingleProduct(Long productId);
+    Product getSingleProduct(Long productId) throws ProductNotFoundException;
 
     List<Product> getAllProducts();
 
-    Product createProduct(Product product);
+    Product createProduct(Product product) throws CategoryNotFoundException;
 
-    boolean deleteProduct(Long productId);
+    void deleteProduct(Long productId);
 
-    Product updateProduct(Long productId, Product product);
-
-    Product partialUpdateProduct(Long productId, Product product);
+    Page<Product> getProductsByTitle(String title, int pageNumber, int pageSize);
 
 }

@@ -14,7 +14,7 @@ import java.util.Optional;
 import java.util.List;
 
 @Repository
-public interface productRepository extends JpaRepository<Product,Long> {
+public interface ProductRepository extends JpaRepository<Product,Long> {
 
     //select * from Product where id = ?
     Optional<Product> findById(Long productId);

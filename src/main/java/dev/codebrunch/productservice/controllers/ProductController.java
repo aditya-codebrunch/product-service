@@ -2,6 +2,7 @@ package dev.codebrunch.productservice.controllers;
 
 import dev.codebrunch.productservice.dtos.ExceptionDto;
 import dev.codebrunch.productservice.dtos.ProductNotFoundExceptionDto;
+import dev.codebrunch.productservice.exceptions.CategoryNotFoundException;
 import dev.codebrunch.productservice.exceptions.ProductNotFoundException;
 import dev.codebrunch.productservice.models.Product;
 import dev.codebrunch.productservice.services.ProductService;
@@ -36,7 +37,7 @@ public class ProductController {
 
     private ProductService productService;
 
-    public ProductController(@Qualifier("fakeStoreProductService") ProductService productService) {
+    public ProductController(@Qualifier("realStoreProductService") ProductService productService) {
         this.productService = productService;
     }
 
@@ -57,7 +58,8 @@ public class ProductController {
     }
 
     @PostMapping("/")
-    public Product createProduct(@RequestBody Product product){
+    public Product createProduct(@RequestBody Product product) throws CategoryNotFoundException {
+        productService.createProduct(product);
         return new Product();
     }
 

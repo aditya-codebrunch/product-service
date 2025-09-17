@@ -7,78 +7,111 @@ import dev.codebrunch.productservice.models.Product;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.redis.core.RedisTemplate;
+
 
 import java.util.ArrayList;
 import java.util.List;
 
+//Note: This service class will implement all the API's using FakeStore.
 @Service("fakeStoreProductService")
 public class FakeStoreProductService implements ProductService {
+    private RestTemplate restTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
 
+//    @Value("${redis.products.section}")
+//    private String productsSection;
 
-    private final String FAKESTORE_API_URL = "https://fakestoreapi.com/products/";
-    private final RestTemplate restTemplate;
-
-    public FakeStoreProductService(RestTemplate restTemplate) {
+    public FakeStoreProductService(RestTemplate restTemplate, RedisTemplate<String, Object> redisTemplate) {
         this.restTemplate = restTemplate;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
-    public Product getSingleProduct(Long id)  throws ProductNotFoundException{
-        ResponseEntity<FakeStoreProductDto> fakeStoreProductDtoResponseEntity = 
-                restTemplate.getForEntity(FAKESTORE_API_URL + id, FakeStoreProductDto.class);
-        FakeStoreProductDto fakeStoreProductDto = fakeStoreProductDtoResponseEntity.getBody();
-        if(fakeStoreProductDto == null){
-            throw new ProductNotFoundException(id.toString());
-        }
-        Product product = convertFakeStoreProductDtoToProduct(fakeStoreProductDto);
-        return product;
+    public Product getSingleProduct(Long productId) throws ProductNotFoundException {
+
+        System.out.println("Fetching product with id: " + productId);
+
+        //First check if the Product with the input productId exists in the Redis.
+//        Product product = (Product) redisTemplate.opsForHash().get("PRODUCTS", "PRODUCT_" + productId);
+//
+//        if (product != null) {
+//            //Product exists in Redis, return it.
+//            //CACHE HIT
+//            return product;
+//        }
+
+        //CACHE MISS
+//        ResponseEntity<FakeStoreProductDto> fakeStoreProductDtoResponseEntity = restTemplate.getForEntity(
+//                "https://fakestoreapi.com/products/" + productId,
+//                FakeStoreProductDto.class);
+//
+//        FakeStoreProductDto fakeStoreProductDto = fakeStoreProductDtoResponseEntity.getBody();
+//
+//        if (fakeStoreProductDto == null) {
+//            //Wrong product Id.
+//            throw new ProductNotFoundException(productId, "Product with id " + productId + " doesn't exist.");
+//        }
+//
+//        //Convert FakeStoreProductDto into Product Object.
+//        Product product = convertFakeStoreProductDtoToProduct(fakeStoreProductDto);
+
+        //Before returning the Product, store it in Redis.
+//        redisTemplate.opsForHash().put("PRODUCTS", "PRODUCT_" + productId, product);
+
+        return new Product();
     }
 
     @Override
     public List<Product> getAllProducts() {
-        ResponseEntity<FakeStoreProductDto[]> fakeStoreProductDtoResponseEntities =
-                restTemplate.getForEntity(FAKESTORE_API_URL,FakeStoreProductDto[].class);
-        FakeStoreProductDto[] fakeStoreProductDtos = fakeStoreProductDtoResponseEntities.getBody();
+        ResponseEntity<FakeStoreProductDto[]> fakeStoreProductDtoResponse =
+                restTemplate.getForEntity(
+                        "https://fakestoreapi.com/products",
+                        FakeStoreProductDto[].class
+                );
+
+        FakeStoreProductDto[] fakeStoreProductDtos =
+                fakeStoreProductDtoResponse.getBody();
         List<Product> products = new ArrayList<>();
+
         for (FakeStoreProductDto fakeStoreProductDto : fakeStoreProductDtos) {
             products.add(convertFakeStoreProductDtoToProduct(fakeStoreProductDto));
         }
+
         return products;
     }
 
     @Override
     public Product createProduct(Product product) {
-        return new Product();
+        return null;
     }
 
     @Override
-    public boolean deleteProduct(Long id) {
-        // Implementation for delete operation
-        return false;
+    public void deleteProduct(Long productId) {
     }
 
     @Override
-    public Product updateProduct(Long id, Product product) {
-        return new Product();
+    public Page<Product> getProductsByTitle(String title, int pageNumber, int pageSize) {
+        return Page.empty();
     }
 
-    @Override
-    public Product partialUpdateProduct(Long id, Product product) {
-        return new Product();
-    }
+    private static Product convertFakeStoreProductDtoToProduct(FakeStoreProductDto fakeStoreProductDto) {
+        if (fakeStoreProductDto == null) {
+            return null;
+        }
 
-    private Product convertFakeStoreProductDtoToProduct(FakeStoreProductDto fakeStoreProductDto) {
         Product product = new Product();
         product.setId(fakeStoreProductDto.getId());
         product.setTitle(fakeStoreProductDto.getTitle());
         product.setPrice(fakeStoreProductDto.getPrice());
+        product.setImgUrl(fakeStoreProductDto.getImage());
         product.setDescription(fakeStoreProductDto.getDescription());
+
         Category category = new Category();
         category.setTitle(fakeStoreProductDto.getCategory());
         product.setCategory(category);
-        product.setImageUrl(fakeStoreProductDto.getImage());
 
         return product;
     }
-
 }

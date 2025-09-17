@@ -5,10 +5,15 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ProductNotFoundException extends RuntimeException {
+public class ProductNotFoundException extends Exception {
     private Long productId;
-    public ProductNotFoundException(String id) {
-        super(id);
-        this.productId = Long.parseLong(id);
+
+    public ProductNotFoundException(Long productId, String message) {
+        super(message);
+        this.productId = productId;
+    }
+
+    public ProductNotFoundException(String message) {
+        super(message);
     }
 }
