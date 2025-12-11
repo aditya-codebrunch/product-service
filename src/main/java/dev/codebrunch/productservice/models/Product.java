@@ -1,20 +1,19 @@
 package dev.codebrunch.productservice.models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Entity(name = "products")
-public class Product extends BaseModel{
+public class Product extends BaseModel {
     private String title;
-    private String description;
     private Double price;
+    private String description;
     private String imgUrl;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn
     private Category category;
-
-
 }
+
