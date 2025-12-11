@@ -4,6 +4,7 @@ import dev.codebrunch.productservice.dtos.FakeStoreProductDto;
 import dev.codebrunch.productservice.exceptions.ProductNotFoundException;
 import dev.codebrunch.productservice.models.Category;
 import dev.codebrunch.productservice.models.Product;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -14,6 +15,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import java.util.ArrayList;
 import java.util.List;
 
+@Primary
 //Note: This service class will implement all the API's using FakeStore.
 @Service("fakeStoreProductService")
 public class FakeStoreProductService implements ProductService {

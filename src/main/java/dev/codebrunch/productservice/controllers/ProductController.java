@@ -1,6 +1,8 @@
 package dev.codebrunch.productservice.controllers;
 
+import dev.codebrunch.productservice.commons.AuthCommons;
 import dev.codebrunch.productservice.dtos.ExceptionDto;
+import dev.codebrunch.productservice.dtos.UserDto;
 import dev.codebrunch.productservice.dtos.ProductNotFoundExceptionDto;
 import dev.codebrunch.productservice.exceptions.CategoryNotFoundException;
 import dev.codebrunch.productservice.exceptions.ProductNotFoundException;
@@ -10,6 +12,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.data.domain.Page;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,65 +21,100 @@ import java.util.List;
 @RestController
 @RequestMapping("/products")
 public class ProductController {
-
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ExceptionDto> handleRuntimeException(){
-        ExceptionDto exceptionDto = new ExceptionDto();
-        exceptionDto.setMessage("Internal Server Error from Controller");
-        exceptionDto.setResolutionDetails("We are working on it. Please try again later");
-        return new ResponseEntity<>(exceptionDto,HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    @ExceptionHandler(ProductNotFoundException.class)
-    public ResponseEntity<ProductNotFoundExceptionDto> handleProductNotFoundException(ProductNotFoundException exception) {
-        ProductNotFoundExceptionDto exceptionDto = new ProductNotFoundExceptionDto();
-        exceptionDto.setProductId(exception.getProductId());
-        exceptionDto.setMessage("Product not found, this is from Controller");
-        exceptionDto.setResolutionDetails("Product with id " + exception.getProductId() + " not found. Please check the id and try again");
-        return new ResponseEntity<>(exceptionDto, HttpStatus.NOT_FOUND);
-    }
-
+    private final RestTemplate restTemplate;
     private ProductService productService;
+    private AuthCommons authCommons;
 
-    public ProductController(@Qualifier("realStoreProductService") ProductService productService) {
+    public ProductController(ProductService productService,
+                             RestTemplate restTemplate,
+                             AuthCommons authCommons) {
         this.productService = productService;
+        this.restTemplate = restTemplate;
+        this.authCommons = authCommons;
     }
 
-
+    // localhost:8080/products/10
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getSingleProduct(@PathVariable("id") Long productId) throws ProductNotFoundException {
+    public Product getSingleProduct(@PathVariable("id") Long productId) throws ProductNotFoundException {
+        //Should we call FakeStore API here ? No, we should make a call to the Service.
 
-        Product product = this.productService.getSingleProduct(productId);
-        ResponseEntity<Product> responseEntity = new ResponseEntity<>(product, HttpStatus.OK);
-        return responseEntity;
+        UserDto userDto = authCommons.validateToken("SampleToken");
+
+//        if (userDto == null) {
+//            //UnAuthorized access.
+//            throw new UnAuthorizedException("Invalid token provided.");
+//        }
+
+        return productService.getSingleProduct(productId); // @198347
+
+        //throw new RuntimeException("Something went wrong");
+//        ResponseEntity<Product> responseEntity  =
+//                new ResponseEntity<>(
+//                        productService.getSingleProduct(productId),
+//                        HttpStatus.OK
+//                );
+
+//        Product product = null;
+//        try {
+//            product = productService.getSingleProduct(productId);
+//            responseEntity = new ResponseEntity<>(product, HttpStatus.OK);
+//        } catch (RuntimeException e) {
+//            e.printStackTrace();
+//            responseEntity = new ResponseEntity<>(HttpStatus.NOT_FOUND);
+//        }
     }
 
+    // localhost:8080/products/
     @GetMapping("/")
-    public List<Product> getAllProducts(){
-
-        List<Product> products = this.productService.getAllProducts();
-        return products;
+    public List<Product> getAllProducts() {
+        return productService.getAllProducts();
     }
 
-    @PostMapping("/")
+    @GetMapping("/title/{title}/{pageNumber}/{pageSize}")
+    public Page<Product> getProductByTitle(@PathVariable("title") String title, @PathVariable("pageNumber") int pageNumber, @PathVariable("pageSize") int pageSize) {
+        return productService.getProductsByTitle(title, pageNumber, pageSize);
+    }
+
+    // localhost:8080/products
+    @PostMapping()
     public Product createProduct(@RequestBody Product product) throws CategoryNotFoundException {
-        productService.createProduct(product);
-        return new Product();
-    }
-
-    @PutMapping("/{id}")
-    public Product updateProduct(@PathVariable("id") Long productId, @RequestBody Product product) {
-        return new Product();
-    }
-
-    @PatchMapping("/{id}")
-    public Product partialUpdateProduct(@PathVariable("id") Long productId, @RequestBody Product product) {
-        return new Product();
+        return productService.createProduct(product);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable("id") Long productId) {
-        return  ResponseEntity.ok().build();
+        return null;
     }
 
+//    @ExceptionHandler(RuntimeException.class)
+//    public ResponseEntity<ExceptionDto> handleRuntimeException() {
+//        ExceptionDto exceptionDto = new ExceptionDto();
+//        exceptionDto.setMessage("Handling exception with the controller.");
+//        return new ResponseEntity<>(exceptionDto, HttpStatus.INTERNAL_SERVER_ERROR);
+//    }
+    //Update API's
+    // updateProduct() -> PATCH
+    // replaceProduct() -> PUT
+
+    @GetMapping("/searchByTitle/{title}")
+    List<Product> getProductsByTitle(@PathVariable String title) {
+        //select * from products where lower(title) LIKE '%iphone%'
+
+        return null;
+    }
 }
+
+/*
+CRUD operations on Product model
+ */
+
+/*
+    {
+        "title" : "iPhone 15 pro",
+        "description" : "best iphone ever",
+        "price" : "130000",
+        ....
+    }
+
+
+ */
